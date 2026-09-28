@@ -9,8 +9,7 @@ long-read data.
   threshold with a data-driven decision that integrates promoter motif evidence
   (σ70-like and phage-specific motifs).
 - **Automated TU module**: build transcription units from TSS/TTS pairs and
-  read-spanning evidence, including multiple TUs per TSS (readthrough) and
-  operon-overlap detection, replacing manual curation.
+  read-spanning evidence, including multiple TUs per TSS (readthrough), replacing manual curation.
 
 ## Status
 Work in progress.
