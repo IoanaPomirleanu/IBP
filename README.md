@@ -1,7 +1,3 @@
-# IBP
-
-Extending the ONT-cappable-seq pipeline for phage transcriptomics with motif-informed dynamic TSS thresholds and automated transcription unit (TU) detection.
-
 # ONT-cappable-seq pipeline extensions
 
 Improvements to the ONT-cappable-seq workflow (Putzeys et al., 2022) for mapping
