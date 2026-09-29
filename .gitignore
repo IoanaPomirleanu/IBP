@@ -1,0 +1,10 @@
+# sequencing data
+input/fastq_data/*.fastq
+input/fastq_data/*.fastq.gz
+input/genome_data/*.fasta
+input/genome_data/*.fai
+
+# pipeline outputs
+results/
+*_peak_calling/
+.snakemake/
