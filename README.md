@@ -13,3 +13,6 @@ long-read data.
 
 ## Status
 Work in progress.
+
+## Based on
+This project builds on the [ONT-cappable-seq pipeline](https://github.com/LoGT-KULeuven/ONT-cappable-seq) by LoGT-KULeuven, starting from revision [`3920110`](https://github.com/LoGT-KULeuven/ONT-cappable-seq/tree/392011099533cfb797612c080c6ea5c8693e0c7d). See the original repository for installation and usage instructions.
