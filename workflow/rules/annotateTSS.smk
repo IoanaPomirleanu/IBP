@@ -53,8 +53,6 @@ rule getInformationFromOverlappingPeaks:
         '{sample}_{ident}_all_overlapping_peaks.{sign}.csv'
     output:
         'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/enr_ratios_{sample}_{ident}.{sign}.csv'
-    params:
-        threshold=config["TSS Threshold"]
     shell:
         """
         commonEnriched=""
@@ -79,9 +77,30 @@ rule getInformationFromOverlappingPeaks:
         # threshold filter removed
         sort -g -k 1,2 > {output}
         """
- # write information to BED files   
-rule PosPeaksToBedFile:
+
+# find enrichment ratio of the RNA spike-in TSS (+ strand candidate on the contig whose name contains 'spike-in name';
+# if several, the one with most enriched reads)
+rule findSpikeInThreshold:
     input: 'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/enr_ratios_{sample}_{ident}.plus.csv'
+    output: 'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/spike_in_threshold_{sample}_{ident}.txt'
+    params:
+        name=config["spike-in name"]
+    shell:
+        """
+        awk -F ',' -v OFS='\t' -v n="{params.name}" '
+            index($1, n) && $5 ~ /\+/ && (found == 0 || $6 > best) {{found = 1; best = $6; c = $1; p = $4; r = $15}}
+            END {{
+                if (!found) {{print "Spike-in not found in data: no + strand candidate on a contig containing " n > "/dev/stderr"; exit 1}}
+                gsub(/"/, "", c); print c, p, r
+            }}' {input} > {output}
+        """
+
+# write information to BED files
+# includes threshold file
+rule PosPeaksToBedFile:
+    input:
+        'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/enr_ratios_{sample}_{ident}.plus.csv',
+        'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/spike_in_threshold_{sample}_{ident}.txt'
     output: 
         temp('results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/{sample}_enriched_{ident}_peaks.plus.bed'),
         temp('results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/{sample}_control_{ident}_peaks.plus.bed')
@@ -90,13 +109,17 @@ rule PosPeaksToBedFile:
         down=config["TSS sequence extraction"]["downstream"]
     shell:
         """
-        awk -v FS='\t' -v OFS='\t' -F ',' '{{print $1, $4 - {params.up}, $4 + {params.down}, "TSS_POS_" NR, 0, "+"}}' {input[0]} | uniq > {output[0]}
-        awk -v FS='\t' -v OFS='\t' -F ',' '{{print $8, $11 - {params.up}, $11 + {params.down}, "TSS_POS_" NR, 0, "+"}}' {input[0]} | uniq > {output[1]}
+        # adds to the name a label if it passes the threshold (_1) or not (_0)
+        t=$(cut -f3 {input[1]})
+        awk -v FS='\t' -v OFS='\t' -F ',' -v t="$t" '{{print $1, $4 - {params.up}, $4 + {params.down}, "TSS_POS_" NR "_" ($15 >= t ? 1 : 0), 0, "+"}}' {input[0]} | uniq > {output[0]}
+        awk -v FS='\t' -v OFS='\t' -F ',' -v t="$t" '{{print $8, $11 - {params.up}, $11 + {params.down}, "TSS_POS_" NR "_" ($15 >= t ? 1 : 0), 0, "+"}}' {input[0]} | uniq > {output[1]}
         sed -i 's/\"//g' {output[0]}
         sed -i 's/\"//g' {output[1]}     
         """
 rule NegPeaksToBedFile:
-    input: 'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/enr_ratios_{sample}_{ident}.minus.csv'
+    input:
+        'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/enr_ratios_{sample}_{ident}.minus.csv',
+        'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/spike_in_threshold_{sample}_{ident}.txt'
     output: 
         temp('results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/{sample}_enriched_{ident}_peaks.minus.bed'),
         temp('results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/{sample}_control_{ident}_peaks.minus.bed')
@@ -105,8 +128,9 @@ rule NegPeaksToBedFile:
         down=config["TSS sequence extraction"]["downstream"]
     shell:
         """
-        awk -v FS='\t' -v OFS='\t' -F ',' '{{print $1, $4 - {params.down}, $4 + {params.up}, "TSS_NEG_" NR,0 , "-"}}' {input[0]} | uniq > {output[0]}
-        awk -v FS='\t' -v OFS='\t' -F ',' '{{print $8, $11 - {params.down}, $11 + {params.up}, "TSS_NEG_" NR,0 , "-"}}' {input[0]} | uniq > {output[1]}
+        t=$(cut -f3 {input[1]})
+        awk -v FS='\t' -v OFS='\t' -F ',' -v t="$t" '{{print $1, $4 - {params.down}, $4 + {params.up}, "TSS_NEG_" NR "_" ($15 >= t ? 1 : 0),0 , "-"}}' {input[0]} | uniq > {output[0]}
+        awk -v FS='\t' -v OFS='\t' -F ',' -v t="$t" '{{print $8, $11 - {params.down}, $11 + {params.up}, "TSS_NEG_" NR "_" ($15 >= t ? 1 : 0),0 , "-"}}' {input[0]} | uniq > {output[1]}
         sed -i 's/\"//g' {output[0]}
         sed -i 's/\"//g' {output[1]}
         """
