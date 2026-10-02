@@ -75,7 +75,9 @@ rule getInformationFromOverlappingPeaks:
         # remove malformed lines (i.e., empty values for both commonControl and commonEnriched -> ^,$)
         paste -d ',' <(echo -e "$commonEnriched") <(echo -e "$commonControl") | sed '/^,$/d' |\
         awk -F ',' -v OFS=',' '{{print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $7/$14}}' |\
-        sort -g -k 1,2 | awk -v t={params.threshold} -F "," '$15 > t {{print }}' > {output}
+        
+        # threshold filter removed
+        sort -g -k 1,2 > {output}
         """
  # write information to BED files   
 rule PosPeaksToBedFile:
@@ -113,7 +115,9 @@ rule combinePosAndNegBedFiles:
     output: 'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/{sample}_{cond}_{ident}_peaks.bed'
     shell:
         """
-        cat {input} > {output}
+        # Does same thing as the TTS correctNegativeValuesTTS rule:
+        # any BED start below 0 is set to 0
+        cat {input} | awk -F '\t' -v OFS='\t' '{{if ($2 < 0) $2 = 0; print}}' > {output}
         """
 # extract sequences based on BED files
 rule extractSequencesTSS:
