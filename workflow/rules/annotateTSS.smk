@@ -129,3 +129,28 @@ rule extractSequencesTSS:
         """
         bedtools getfasta -fi {params.fasta} -bed {input} -fo {output} -s -name 
         """
+# Writes every TSS candidate (all enriched peaks, both strands) to one table, without applying the TSS threshold.
+# Peaks without a control peak are kept and flagged "enriched_only"; above_threshold marks the R9 TSS calls.
+rule tssCandidates:
+    input:
+        enriched=expand('{{sample}}_peak_calling/{{sample}}_enriched_{{ident}}.5end.{sign}.peaks.oracle.narrowPeak.counts.clustered.csv', sign=["plus", "minus"]),
+        control=expand('{{sample}}_peak_calling/{{sample}}_control_{{ident}}.5end.{sign}.peaks.oracle.narrowPeak.counts.clustered.csv', sign=["plus", "minus"]),
+        bedgraph=expand('{{sample}}_peak_calling/{{sample}}_control_{{ident}}.5end.{sign}.bedgraph', sign=["plus", "minus"])
+    output:
+        'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/TSS_candidates_{sample}_{ident}.tsv'
+    params:
+        error=config["peak alignment error"],
+        threshold=config["TSS Threshold"],
+        pseudocount=config["TSS candidates"]["control pseudocount"]
+    conda:
+        "../envs/env_transcription_boundaries.yaml"
+    shell:
+        """
+        chmod +x ./tss_candidates.py
+        ./tss_candidates.py \
+            --enriched-plus {input.enriched[0]} --enriched-minus {input.enriched[1]} \
+            --control-plus {input.control[0]} --control-minus {input.control[1]} \
+            --control-bedgraph-plus {input.bedgraph[0]} --control-bedgraph-minus {input.bedgraph[1]} \
+            --error {params.error} --threshold {params.threshold} --pseudocount {params.pseudocount} \
+            --output {output}
+        """

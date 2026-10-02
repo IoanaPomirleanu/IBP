@@ -21,6 +21,10 @@ peak alignment error: 2
 TSS Threshold: 1
 TTS threshold: 0.20
 
+# all TSS candidates table: control read floor for peaks without a control peak
+TSS candidates:
+  control pseudocount: 1
+
 TSS sequence extraction:
   upstream: 40
   downstream: 0
