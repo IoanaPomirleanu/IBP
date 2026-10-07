@@ -1,0 +1,5 @@
+[dedup_windows] removed TSS_POS_2_1::LUZ7:57-112(+): within 55 nt of TSS_POS_40_1::LUZ7:50-105(+)
+[dedup_windows] removed TSS_POS_19_1::LUZ7:3665-3720(+): within 55 nt of TSS_POS_18_1::LUZ7:3632-3687(+)
+[dedup_windows] removed TSS_POS_28_1::LUZ7:74298-74353(+): within 55 nt of TSS_POS_27_1::LUZ7:74291-74346(+)
+[dedup_windows] removed TSS_POS_27_1::LUZ7:74291-74346(+): same promoter as TSS_POS_40_1::LUZ7:50-105(+) (repeat copy)
+[dedup_windows] kept 5 of 9 windows

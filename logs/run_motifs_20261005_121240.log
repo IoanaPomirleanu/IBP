@@ -1,0 +1,78 @@
+Assuming unrestricted shared filesystem usage.
+
+SNAKEMAKE
+=========
+  Date: 2026-10-05 12:12:42
+  Workflow ID: c0d0dbc7-351a-45de-b509-7f90b7f619a8
+  Platform: Linux-5.14.0-687.29.1.el9_8.x86_64-x86_64-with-glibc2.34
+  Host: l33c20n3
+  User: vsc37390
+  Snakemake version: 9.27.0
+  Python version: 3.11.16 (main, Sep  2 2026, 23:39:52) [GCC 15.3.0]
+  Command: /vsc-hard-mounts/leuven-data/373/vsc37390/miniforge3/envs/ontcap/bin/snakemake discover_motifs --cores 4 --printshellcmds --rerun-incomplete
+  Snakefile: /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq/workflow/Snakefile
+  Base directory: /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq/workflow
+  Run directory: /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq
+  Working directory: /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq
+  Config file(s): ['./config/config.yaml']
+  Config MD5: bbee8ee89afbfb4c41738e1af019176c
+
+Building DAG of jobs...
+Using shell: /bin/bash
+Provided cores: 4
+Rules claiming more threads will be scaled down.
+Conda environments: ignored
+Job stats:
+job                       count
+----------------------  -------
+motif_background_model        1
+discover_motifs               1
+total                         2
+
+Select jobs to execute...
+Execute 1 jobs...
+
+[Mon Oct  5 12:12:43 2026]
+localrule motif_background_model:
+    input: input/genome_data/LUZ7.fasta
+    output: results/motifs/LUZ7_US449_t5/background_genome.fa, results/motifs/LUZ7_US449_t5/background_order2.txt
+    log: results/motifs/LUZ7_US449_t5/logs/background_model.log
+    jobid: 1
+    reason: Missing output files: results/motifs/LUZ7_US449_t5/background_order2.txt; Params have changed since last execution: Union of exclusive params before and now across all output: before: 'LUZ7' now: 'NC_013691.1' 
+    resources: tmpdir=/tmp
+Shell command: 
+        python /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq/workflow/scripts/extract_records.py input/genome_data/LUZ7.fasta results/motifs/LUZ7_US449_t5/background_genome.fa NC_013691.1 > results/motifs/LUZ7_US449_t5/logs/background_model.log 2>&1
+        fasta-get-markov -m 2 -dna results/motifs/LUZ7_US449_t5/background_genome.fa results/motifs/LUZ7_US449_t5/background_order2.txt >> results/motifs/LUZ7_US449_t5/logs/background_model.log 2>&1
+        
+[Mon Oct  5 12:12:43 2026]
+Finished jobid: 1 (Rule: motif_background_model)
+1 of 2 steps (50%) done
+Select jobs to execute...
+Execute 1 jobs...
+
+[Mon Oct  5 12:12:43 2026]
+localrule discover_motifs:
+    input: results/meme_training.fa, results/motifs/LUZ7_US449_t5/background_order2.txt
+    output: results/motifs/LUZ7_US449_t5/meme_training_dedup.fa, results/motifs/LUZ7_US449_t5/meme/meme.txt
+    log: results/motifs/LUZ7_US449_t5/logs/dedup_windows.log, results/motifs/LUZ7_US449_t5/logs/meme.log
+    jobid: 0
+    reason: Input files updated by another job: results/motifs/LUZ7_US449_t5/background_order2.txt
+    resources: tmpdir=/tmp
+Shell command: 
+        python /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq/workflow/scripts/dedup_windows.py --fasta results/meme_training.fa --out results/motifs/LUZ7_US449_t5/meme_training_dedup.fa                --max-offset 15 2> results/motifs/LUZ7_US449_t5/logs/dedup_windows.log
+        n=$(grep -c '>' results/motifs/LUZ7_US449_t5/meme_training_dedup.fa || true)
+        if [ "$n" -ge 5 ]; then
+            # windows are already oriented 5'->3' along the transcript,
+            # so MEME searches the given strand only (no -revcomp)
+            meme results/motifs/LUZ7_US449_t5/meme_training_dedup.fa -dna -oc results/motifs/LUZ7_US449_t5/meme -mod zoops                  -nmotifs 3 -minw 6 -maxw 20                  -bfile results/motifs/LUZ7_US449_t5/background_order2.txt -nostatus > results/motifs/LUZ7_US449_t5/logs/meme.log 2>&1
+        else
+            mkdir -p results/motifs/LUZ7_US449_t5/meme
+            printf 'MEME version 5\n' > results/motifs/LUZ7_US449_t5/meme/meme.txt
+            echo "only $n independent windows (< 5); discovery skipped" > results/motifs/LUZ7_US449_t5/logs/meme.log
+        fi
+        
+[Mon Oct  5 12:12:44 2026]
+Finished jobid: 0 (Rule: discover_motifs)
+2 of 2 steps (100%) done
+Complete log(s): /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq/.snakemake/log/2026-10-05T121241.965571.snakemake.log
+Elapsed time: 0:00:02.744400

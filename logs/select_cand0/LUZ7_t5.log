@@ -1,0 +1,6 @@
+[select_cand0] strand +: TSS sits at window offset 50 (window start + 50; 384 candidates agree)
+[select_cand0] strand -: TSS sits at window offset 5 (window start + 5; 689 candidates agree)
+[select_cand0] _0 candidates (all records)  1004
+[select_cand0] on phage record(s)           30
+[select_cand0] low_ratio                    3
+[select_cand0] selected                     27

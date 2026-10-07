@@ -1,0 +1,7 @@
+name: env_motif
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.9
+  - meme>=5.4

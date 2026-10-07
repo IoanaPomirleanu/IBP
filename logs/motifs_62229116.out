@@ -1,0 +1,44 @@
+SLURM_JOB_ID: 62229116
+SLURM_JOB_USER: vsc37390
+SLURM_JOB_ACCOUNT: lp_cosubi
+SLURM_JOB_NAME: motifs
+SLURM_CLUSTER_NAME: wice
+SLURM_JOB_PARTITION: batch
+SLURM_NNODES: 1
+SLURM_NODELIST: l33c20n3
+SLURM_JOB_CPUS_PER_NODE: 4
+Date: Mon Oct  5 11:26:28 CEST 2026
+Walltime: 00-01:00:00
+========================================================================
+Environment: ontcap  (snakemake 9.27.0, MEME 5.5.9)
+Training windows (_1): 9   (results/meme_training.fa)
+Target: discover_motifs   Cores: 4   Job: 62229116
+Assuming unrestricted shared filesystem usage.
+
+SNAKEMAKE
+=========
+  Date: 2026-10-05 11:26:32
+  Workflow ID: 6b1064a8-aa3a-4f11-bb75-8c410681f920
+  Platform: Linux-5.14.0-687.29.1.el9_8.x86_64-x86_64-with-glibc2.34
+  Host: l33c20n3
+  User: vsc37390
+  Snakemake version: 9.27.0
+  Python version: 3.11.16 (main, Sep  2 2026, 23:39:52) [GCC 15.3.0]
+  Command: /vsc-hard-mounts/leuven-data/373/vsc37390/miniforge3/envs/ontcap/bin/snakemake discover_motifs --cores 4 --printshellcmds --rerun-incomplete
+  Snakefile: /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq/workflow/Snakefile
+  Base directory: /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq/workflow
+  Run directory: /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq
+  Working directory: /vsc-hard-mounts/leuven-data/373/vsc37390/ONT_cappable_seq
+  Config file(s): ['./config/config.yaml']
+  Config MD5: 02b4f6387f751dd9e8bf42b24e592d30
+
+Building DAG of jobs...
+Nothing to be done (all requested files are present and up to date).
+
+==== Results in results/motifs/LUZ7_US449_t5/ ====
+[dedup_windows] kept 6 of 9 windows
+Motifs found by MEME:
+MOTIF TRCGSTSTYGRARSGSAWK MEME-1	width =  19  sites =   6  llr = 90  E-value = 1.5e-004
+MOTIF TTGRGTT MEME-2	width =   7  sites =   3  llr = 31  E-value = 2.2e+001
+MOTIF WKTSTMAT MEME-3	width =   8  sites =   3  llr = 32  E-value = 4.4e+001
+Motif logos: results/motifs/LUZ7_US449_t5/meme/meme.html

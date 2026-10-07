@@ -1,0 +1,31 @@
+# ---------------------------------------------------------------------------
+# Add to config/config.yaml
+# ---------------------------------------------------------------------------
+
+# --- motif discovery (rules/motifs.smk) -------------------------------------
+motifs:
+  outdir: results/motifs
+  training fasta: results/promoter_motifs/LUZ7_t5/meme_training.fa   # Ioana's _1 windows
+  genome fasta: input/genome_data/LUZ7.fasta      # phage only, for the background model
+  genome records: [NC_013691.1]
+  dedup distance: 55            # windows closer than this are one promoter
+  min sequences: 5
+  nmotifs: 3
+  minw: 6
+  maxw: 20
+  mode: zoops
+  markov order: 2
+
+# --- shared by scan_background and scan_candidates --------------------------
+# (this block already exists for scan_background: only add "motif file")
+motif background:
+  # n random windows / fimo threshold / fimo options: as set by your colleague
+  # one motif file for BOTH scans; {sample} and {ident} are filled in
+  motif file: "results/motifs/LUZ7_US449_t5/meme/meme.txt"
+
+# --- _0 candidate selection (rules/scan_candidates.smk) ---------------------
+candidate selection:
+  phage records: null           # null = the {sample} name (e.g. LUZ7), as in Ioana's rule
+  min enriched reads: 0         # 0 = no floor
+  min enrichment ratio: 1.0     # drop _0 candidates that are not enriched at all
+  exclude near _1: 0            # nt; drop _0 within this distance of a _1 (0 = keep all)

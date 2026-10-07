@@ -1,0 +1,60 @@
+Sample name: LUZ7_US449_t5
+fasta file: input/genome_data/LUZ7_US449_spike.fasta
+enriched fastq: input/fastq_data/LUZ7_US449_t5_enriched.fastq
+control fastq: input/fastq_data/LUZ7_US449_t5_control.fastq
+ID: group
+termseq alpha: 0.001
+
+cluster width:
+  TSS: 15
+  TTS: 30
+
+minimum coverage: 
+  enriched:
+    TSS: 25
+    TTS: 25
+  control:
+    TSS: 2
+    TTS: 5
+    
+peak alignment error: 2
+TSS Threshold: 1
+TTS threshold: 0.20
+
+TSS sequence extraction:
+  upstream: 40
+  downstream: 0
+
+TTS sequence extraction:
+  upstream: 30
+  downstream: 30
+
+motifs:
+  dedup distance: 55
+  outdir: results/motifs
+  training fasta: results/meme_training.fa             # _1 windows
+  below fasta: results/PATH/TO/candidates_below.fa     # _0 windows
+  background fasta: null                               # random windows, optional for now
+  genome fasta: input/genome_data/LUZ7.fasta
+  genome records: [NC_013691.1]
+
+
+  min sequences: 5      # independent windows needed to run MEME
+  nmotifs: 3
+  minw: 6
+  maxw: 20
+  mode: zoops           # zero or one motif per window
+  markov order: 2       # background model built from the phage genome
+  fimo pvalue: 0.001
+
+motif background:
+  n random windows: 1000
+  fimo threshold: 0.001
+  fimo options: "--norc"
+  motif file: "results/motifs/LUZ7_US449_t5/meme/meme.txt"
+
+candidate selection:
+  phage records: null
+  min enriched reads: 0
+  min enrichment ratio: 1.0
+  exclude near _1: 0
