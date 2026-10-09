@@ -1,7 +1,7 @@
-Sample name: LUZ7_US449_t5
-fasta file: input/genome_data/LUZ7_US449_spike.fasta
-enriched fastq: input/fastq_data/LUZ7_US449_t5_enriched.fastq
-control fastq: input/fastq_data/LUZ7_US449_t5_control.fastq
+Sample name: sampleID
+fasta file: input/genome_data/sampleID.fasta
+enriched fastq: input/fastq_data/sampleID_enriched.fastq
+control fastq: input/fastq_data/sampleID_control.fastq
 ID: group
 termseq alpha: 0.001
 
@@ -18,7 +18,7 @@ minimum coverage:
     TTS: 5
     
 peak alignment error: 2
-TSS Threshold: 1
+spike-in name: FLuc
 TTS threshold: 0.20
 
 TSS sequence extraction:
