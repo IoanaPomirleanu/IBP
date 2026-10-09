@@ -1,1 +1,0 @@
-FLuc_spikein	146	50.3864

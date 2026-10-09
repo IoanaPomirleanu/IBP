@@ -1,7 +1,0 @@
-# 0-order Markov frequencies from file input/genome_data/LUZ7.fasta
-# seqs: 1    min: 74901    max: 74901    avg: 74901.0    sum: 74901    alph: DNA
-# order 0
-A 2.339e-01
-C 2.661e-01
-G 2.661e-01
-T 2.339e-01
