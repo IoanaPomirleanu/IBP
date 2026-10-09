@@ -4,6 +4,7 @@ enriched fastq: input/fastq_data/LUZ7_US449_t5_enriched.fastq
 control fastq: input/fastq_data/LUZ7_US449_t5_control.fastq
 ID: group
 termseq alpha: 0.001
+spike-in name: FLuc
 
 cluster width:
   TSS: 15
@@ -58,3 +59,6 @@ candidate selection:
   min enriched reads: 0
   min enrichment ratio: 1.0
   exclude near _1: 0
+
+motif rescue:
+  target fpr: 0.05  #standard value from literature => check with "ground truth"
