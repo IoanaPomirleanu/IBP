@@ -32,7 +32,7 @@ TTS sequence extraction:
 motifs:
   dedup distance: 55
   outdir: results/motifs
-  training fasta: results/meme_training.fa             # _1 windows
+  training fasta: results/promoter_motifs/LUZ7_t5/meme_training.fa             # _1 windows
   below fasta: results/PATH/TO/candidates_below.fa     # _0 windows
   background fasta: null                               # random windows, optional for now
   genome fasta: input/genome_data/LUZ7.fasta
@@ -51,7 +51,7 @@ motif background:
   n random windows: 1000
   fimo threshold: 0.001
   fimo options: "--norc"
-  motif file: "results/motifs/LUZ7_US449_t5/meme/meme.txt"
+  motif file: "results/motifs/{sample}/meme/meme.txt"
 
 candidate selection:
   phage records: null
