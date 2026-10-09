@@ -18,7 +18,7 @@ minimum coverage:
     TTS: 5
     
 peak alignment error: 2
-TSS Threshold: 1
+spike-in name: FLuc
 TTS threshold: 0.20
 
 TSS sequence extraction:
@@ -28,4 +28,3 @@ TSS sequence extraction:
 TTS sequence extraction:
   upstream: 30
   downstream: 30
-
