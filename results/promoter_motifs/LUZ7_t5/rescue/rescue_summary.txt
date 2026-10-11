@@ -1,0 +1,8 @@
+random windows	1000
+target fpr per motif	0.05
+combined background rate	0.0920
+_1 TSSs (tier 1)	9
+_0 candidates scanned	27
+_0 rescued (tier 2)	4
+expected false rescues	2.5
+estimated FDR among rescued	0.621
