@@ -8,6 +8,7 @@ include: 'rules/motifs.smk'
 include: 'rules/scan_candidates.smk'
 include: 'rules/scanBackground.smk'
 include: 'rules/rescue_tss.smk'
+include: 'rules/detectTUs.smk'
 rule all:
     input: 
         expand("results/processed_fastq/pychopper/pychopper_{sample}_{ident}/{sample}_{cond}_{ident}_full_length_output.fq", sample=config["Sample name"], ident=config["ID"], cond=["enriched", "control"]),
@@ -16,4 +17,5 @@ rule all:
         expand('results/alignments/BAM_files_{sample}/{sample}_{cond}_{ident}.sorted.bam.bai', sample=config["Sample name"], ident=config["ID"], cond=["enriched", "control"]),
         expand("results/promoter_motifs/{sample}_{ident}/meme_training.fa", sample=config["Sample name"], ident=config["ID"]),
         expand("results/promoter_motifs/{sample}_{ident}/fimo_cand0.tsv", sample=config["Sample name"], ident=config["ID"]),
-        expand("results/promoter_motifs/{sample}_{ident}/rescue/tss_tiers.tsv", sample=config["Sample name"], ident=config["ID"])
+        expand("results/promoter_motifs/{sample}_{ident}/rescue/tss_tiers.tsv", sample=config["Sample name"], ident=config["ID"]),
+        expand("results/transcription_units/TU_{sample}/TU_{sample}_{ident}/TU_{sample}_{ident}.tsv", sample=config["Sample name"], ident=config["ID"])
