@@ -3,18 +3,19 @@
 # One TSS can give several TUs (read-through). A TSS whose reads end at no TTS gets one TU up to its furthest read 3' end.
 # All positions below are 1-based; "points" are 1-nt BED intervals (pos-1, pos).
 
-# 1. one point per TSS above the spike-in threshold (_1). TSS window: + [pos-up, pos+down], - [pos-down, pos+up]
+# 1. one point per TSS in the final TSS set (tier 1 = _1, tier 2 = rescued _0, from rescue_tss), phage contig only
+#    (contig name contains the sample name, e.g. LUZ7). TSS window: + [pos-up, pos+down], - [pos-down, pos+up]
 rule tssPoints:
     input:
-        'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/{sample}_enriched_{ident}_peaks.bed'
+        'results/promoter_motifs/{sample}_{ident}/rescue/tss_final.bed'
     output:
         'results/transcription_units/TU_{sample}/TU_{sample}_{ident}/TSS_points_{sample}_{ident}.bed'
     params:
         down=config["TSS sequence extraction"]["downstream"]
     shell:
         """
-        awk -F '\t' -v OFS='\t' -v d={params.down} '
-            $4 ~ /_1$/ {{
+        awk -F '\t' -v OFS='\t' -v d={params.down} -v phage="{wildcards.sample}" '
+            index($1, phage) {{
                 p = ($6 == "+") ? $3 - d : $2 + d
                 print $1, p - 1, p, $4, 0, $6
             }}' {input} | sort -k1,1 -k2,2n > {output}
@@ -37,7 +38,7 @@ rule ttsPoints:
             }}' {input} | sort -k1,1 -k2,2n > {output}
         """
 
-# 3. every primary read of the enriched sample as a point at its 5' end, with its 3' end in the name column
+# 3. every primary read of the enriched sample on the phage contig as a point at its 5' end, with its 3' end in the name column
 rule readEnds:
     input:
         'results/alignments/BAM_files_{sample}/{sample}_enriched_{ident}.sorted.bam'
@@ -48,7 +49,7 @@ rule readEnds:
     shell:
         """
         samtools view -b -F 0x904 {input} | bedtools bamtobed -i stdin | \
-        awk -F '\t' -v OFS='\t' '{{
+        awk -F '\t' -v OFS='\t' -v phage="{wildcards.sample}" 'index($1, phage) {{
                 if ($6 == "+") {{ f = $2 + 1; t = $3 }} else {{ f = $3; t = $2 + 1 }}
                 print $1, f - 1, f, t, 0, $6
             }}' | sort -k1,1 -k2,2n > {output}
@@ -128,7 +129,7 @@ rule combineTUs:
         tsv='results/transcription_units/TU_{sample}/TU_{sample}_{ident}/TU_{sample}_{ident}.tsv'
     shell:
         """
-        cat {input} | sort -k1,1 -k3,3n | awk -F '\t' -v OFS='\t' -v tsv={output.tsv} '
+        cat {input} | sort -k1,1 -k3,3n -k5,5n | awk -F '\t' -v OFS='\t' -v tsv={output.tsv} '
             BEGIN {{ print "TU_id", "chr", "start", "end", "strand", "TSS", "TSS_pos", "end_id", "end_pos", "n_reads", "type" > tsv }}
             {{
                 a = ($3 < $5) ? $3 : $5
@@ -137,4 +138,41 @@ rule combineTUs:
                 print $1, a - 1, b, id, $7, $6
                 print id, $1, a - 1, b, $6, $2, $3, $4, $5, $7, $8 > tsv
             }}' > {output.bed}
+        """
+
+# 8. genes per TU: genes on the same strand that are at least 'gene overlap fraction' inside the TU (papers: 0.9).
+#    The GFF seqid is replaced by the phage contig name of the TUs (NCBI uses e.g. NC_013691.1, the FASTA uses LUZ7),
+#    so the GFF must contain the phage genes only. Output: the TU table plus n_genes and genes.
+rule genesPerTU:
+    input:
+        tsv='results/transcription_units/TU_{sample}/TU_{sample}_{ident}/TU_{sample}_{ident}.tsv',
+        bed='results/transcription_units/TU_{sample}/TU_{sample}_{ident}/TU_{sample}_{ident}.bed',
+        gff=config["TU detection"]["gene annotation"]
+    output:
+        genes=temp('results/transcription_units/TU_{sample}/TU_{sample}_{ident}/genes_{sample}_{ident}.bed'),
+        hits=temp('results/transcription_units/TU_{sample}/TU_{sample}_{ident}/TU_gene_hits_{sample}_{ident}.bed'),
+        tsv='results/transcription_units/TU_{sample}/TU_{sample}_{ident}/TU_genes_{sample}_{ident}.tsv'
+    params:
+        types=config["TU detection"]["gene features"],
+        attr=config["TU detection"]["gene name attribute"],
+        f=config["TU detection"]["gene overlap fraction"]
+    conda:
+        "../envs/env_tu.yaml"
+    shell:
+        """
+        chr=$(cut -f1 {input.bed} | head -n 1)
+        awk -F '\t' -v OFS='\t' -v c="$chr" -v t="^({params.types})$" -v a="{params.attr}" '
+            !/^#/ && NF == 9 && $3 ~ t {{
+                name = "-"
+                if (match(";" $9, ";" a "=[^;]*")) {{
+                    name = substr(";" $9, RSTART + length(a) + 2, RLENGTH - length(a) - 2)
+                }}
+                print c, $4 - 1, $5, name, 0, $7
+            }}' {input.gff} | sort -k1,1 -k2,2n > {output.genes}
+        bedtools intersect -a {input.bed} -b {output.genes} -F {params.f} -s -wa -wb > {output.hits}
+        awk -F '\t' -v OFS='\t' '
+            FILENAME == ARGV[1] {{ g[$4] = n[$4] ? g[$4] " | " $10 : $10; n[$4]++; next }}
+            FNR == 1 {{ print $0, "n_genes", "genes"; next }}
+            {{ print $0, n[$1] + 0, ($1 in g) ? g[$1] : "-" }}
+            ' {output.hits} {input.tsv} > {output.tsv}
         """

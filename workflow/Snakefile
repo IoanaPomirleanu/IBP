@@ -18,4 +18,4 @@ rule all:
         expand("results/promoter_motifs/{sample}_{ident}/meme_training.fa", sample=config["Sample name"], ident=config["ID"]),
         expand("results/promoter_motifs/{sample}_{ident}/fimo_cand0.tsv", sample=config["Sample name"], ident=config["ID"]),
         expand("results/promoter_motifs/{sample}_{ident}/rescue/tss_tiers.tsv", sample=config["Sample name"], ident=config["ID"]),
-        expand("results/transcription_units/TU_{sample}/TU_{sample}_{ident}/TU_{sample}_{ident}.tsv", sample=config["Sample name"], ident=config["ID"])
+        expand("results/transcription_units/TU_{sample}/TU_{sample}_{ident}/TU_genes_{sample}_{ident}.tsv", sample=config["Sample name"], ident=config["ID"])

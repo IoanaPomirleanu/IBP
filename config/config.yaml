@@ -66,4 +66,8 @@ TU detection:
   TSS window: 5        # a read starts "at" a TSS if its 5' end is within this many nt
   TTS window: 20       # a read ends "at" a TTS if its 3' end is within this many nt
   minimum reads: 1     # reads needed to keep a TSS -> TTS pair
-  
+  # step 8, genes per TU
+  gene annotation: input/genome_data/LUZ7.gff3   # GFF of the phage genes only (e.g. NCBI NC_013691.1)
+  gene features: gene                           # GFF column 3 types to use, e.g. "gene" or "gene|ncRNA"
+  gene name attribute: Name                     # attribute shown as the gene name, e.g. Name or locus_tag
+  gene overlap fraction: 0.9                    # fraction of a gene that must lie inside the TU (papers: 0.9)
