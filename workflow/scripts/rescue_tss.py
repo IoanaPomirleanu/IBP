@@ -28,6 +28,13 @@ rescue_tss: rescue _0 TSS candidates that have a promoter motif at the right pla
 2. Rescue: a _0 candidate is rescued if any used motif hits it inside its position
    range with p <= that motif's cut-off.
 
+Known motifs (KNOWN-<name>, supplied by the user, rules/knownMotifs.smk) are always
+used. Their position range comes from the config (--known-position, relative to
+the TSS), or is learned from where they hit the _1 promoters (--training-fimo,
+same site-count / spread rules as above); if neither is possible they count
+anywhere in the window. They are calibrated on the random windows together with
+the de novo motifs.
+
 3. Tiers: 1 = _1 TSS (above the spike-in threshold), 2 = rescued _0, 3 = _0 not rescued.
 """
 import argparse
@@ -55,6 +62,12 @@ parser.add_argument("--position", nargs="+", default=["auto"])   # auto | off | 
 parser.add_argument("--position-slack", type=int, default=3)
 parser.add_argument("--up", type=int, default=None)    # TSS sequence extraction: upstream
 parser.add_argument("--down", type=int, default=None)  # TSS sequence extraction: downstream
+# known (user-supplied) motifs, see rules/knownMotifs.smk
+parser.add_argument("--known-list", default=None)     # known_motifs.tsv (alt ids KNOWN-...)
+parser.add_argument("--training-fimo", default=None)  # FIMO on the deduplicated _1 windows
+parser.add_argument("--training-ids", default=None)   # trn0001 -> _1 window name
+parser.add_argument("--known-position", nargs=3, action="append", default=[],
+                    metavar=("NAME", "REL_MIN", "REL_MAX"))  # motif start relative to TSS (TSS = 0)
 parser.add_argument("--outdir", required=True)
 args = parser.parse_args()
 
@@ -109,26 +122,77 @@ meme = read_meme_sites(args.motif_file)
 rnd = read_fimo(args.random_fimo)
 cand = read_fimo(args.cand0_fimo)
 
+# --- known motifs: where they hit the _1 promoters -------------------------
+KNOWN_PREFIX = "KNOWN-"
+known = []
+if args.known_list and os.path.getsize(args.known_list) > 0:
+    known = list(pd.read_csv(args.known_list, sep="\t")["motif"].astype(str))
+n_train = None
+known_sites = {k: [] for k in known}
+if args.training_fimo and known:
+    if args.training_ids and os.path.getsize(args.training_ids) > 0:
+        n_train = sum(1 for _ in open(args.training_ids))
+    tr = read_fimo(args.training_fimo)
+    tr = tr[tr["motif_alt_id"].isin(known) & (tr["p-value"] <= args.start_cutoff)]
+    # one site per _1 promoter: the best hit
+    tr = tr.sort_values("p-value").drop_duplicates(["motif_alt_id", "sequence_name"])
+    for k, g in tr.groupby("motif_alt_id"):
+        known_sites[k] = list(g["start"])
+known_pos = {}
+for name, lo, hi in args.known_position:
+    key = name if name.startswith(KNOWN_PREFIX) else KNOWN_PREFIX + name
+    if args.up is None:
+        sys.exit("--known-position needs --up (TSS sequence extraction: upstream)")
+    tss_w = args.up + 1                      # TSS = window position up+1 (+ strand)
+    known_pos[key] = (tss_w + int(lo) - args.position_slack, tss_w + int(hi) + args.position_slack)
+for k in known_pos:
+    if k not in known:
+        print(f"WARNING: position given for {k}, but there is no such known motif")
+
 # motifs FIMO knows about (a motif file without a MOTIF block gives none)
-all_motifs = list(dict.fromkeys(list(meme) + list(rnd["motif_alt_id"].unique())))
+all_motifs = list(dict.fromkeys(
+    [m for m in meme if not m.startswith(KNOWN_PREFIX)] + known
+    + [m for m in rnd["motif_alt_id"].unique() if not m.startswith(KNOWN_PREFIX)]))
 
 sel_rows, ranges = [], {}
 for alt in all_motifs:
-    info = meme.get(alt, {"id": alt, "evalue": None, "sites": []})
+    is_known = alt in known
+    if is_known:
+        info = {"id": alt, "evalue": None, "sites": known_sites.get(alt, [])}
+    else:
+        info = meme.get(alt, {"id": alt, "evalue": None, "sites": []})
     sites = info["sites"]
     spread = (max(sites) - min(sites)) if sites else None
+    positional = bool(sites) and len(sites) >= args.min_training_sites and spread <= args.max_site_spread
 
     # position range
     if args.position[0] == "off":
         rng = None
+    elif is_known and alt in known_pos:
+        rng = known_pos[alt]
     elif args.position[0] == "auto":
-        rng = (min(sites) - args.position_slack, max(sites) + args.position_slack) if sites else None
+        if is_known:
+            rng = (min(sites) - args.position_slack, max(sites) + args.position_slack) if positional else None
+        else:
+            rng = (min(sites) - args.position_slack, max(sites) + args.position_slack) if sites else None
     else:
         rng = (int(args.position[0]), int(args.position[1]))
 
     # selection
+    hits_txt = f"{len(sites)}/{n_train}" if n_train else str(len(sites))
     if args.motifs:
         use, why = alt in args.motifs, "listed in config" if alt in args.motifs else "not listed in config"
+    elif is_known:
+        use = True
+        if args.position[0] == "off":
+            why = f"known motif; hits {hits_txt} _1 promoters; position rule off"
+        elif alt in known_pos:
+            why = f"known motif; hits {hits_txt} _1 promoters; position from config"
+        elif rng:
+            why = f"known motif; hits {hits_txt} _1 promoters; position learned from them"
+        else:
+            why = (f"known motif; hits {hits_txt} _1 promoters, too few or too scattered to learn "
+                   f"a position -> counted anywhere in the window (set its position in the config)")
     elif not sites:
         use, why = True, "no MEME training sites in motif file: used without selection"
     elif len(sites) < args.min_training_sites:
@@ -142,10 +206,13 @@ for alt in all_motifs:
     if use:
         ranges[alt] = rng
 
+    tss_w = (args.up + 1) if args.up is not None else None
     sel_rows.append(dict(
-        motif=alt, consensus=info["id"], evalue=info["evalue"], n_training_sites=len(sites),
+        motif=alt, source="known" if is_known else "de novo", consensus=info["id"],
+        evalue=info["evalue"], n_training_sites=len(sites), n_training_windows=n_train if is_known else None,
         training_starts=",".join(map(str, sorted(sites))), spread=spread,
         allowed_start_min=rng[0] if rng else None, allowed_start_max=rng[1] if rng else None,
+        allowed_start_rel_tss=(f"{rng[0] - tss_w}..{rng[1] - tss_w}" if rng and tss_w else None),
         used=use, reason=why))
     print(f"{alt}: {'USED' if use else 'dropped'} ({why}); allowed starts {rng}")
 
@@ -153,8 +220,9 @@ sel = pd.DataFrame(sel_rows)
 sel.to_csv(f"{args.outdir}/motif_selection.tsv", sep="\t", index=False)
 if not ranges:
     print("WARNING: no motif selected -> nothing can be rescued")
-if all(e is not None and e > 0.05 for e in sel.loc[sel["used"], "evalue"]) and ranges:
-    print("NOTE: no used motif is significant in MEME (E > 0.05); pool more _1 windows")
+dn_used = sel[(sel["source"] == "de novo") & sel["used"]] if len(sel) else sel
+if len(dn_used) and all(e is not None and e > 0.05 for e in dn_used["evalue"]):
+    print("NOTE: no used de novo motif is significant in MEME (E > 0.05); pool more _1 windows")
 
 
 def apply_rules(d):
@@ -286,6 +354,8 @@ n_rescued = int((bed0["tier"] == 2).sum())
 expected_false = combined * n0
 with open(f"{args.outdir}/rescue_summary.txt", "w") as f:
     f.write(f"motifs used\t{','.join(ranges) or 'none'}\n")
+    if known:
+        f.write(f"known motifs given\t{','.join(known)}\n")
     for m, r in ranges.items():
         f.write(f"allowed starts {m}\t{r[0]}-{r[1]}\n" if r else f"allowed starts {m}\tany\n")
     f.write(f"random windows\t{n_windows}\n")

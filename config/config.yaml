@@ -69,3 +69,17 @@ motif rescue:
   position rule: auto       # auto = where MEME found the motif in the _1 windows (+- slack)
                             # off = anywhere in the window; [26, 41] = fixed range of hit starts
   position slack: 3         # nt added on both sides of the training-site range
+# --- known promoter motifs (rules/knownMotifs.smk) ---------------------------
+# Motifs the user already knows (literature, databases, a related phage).
+# Leave both "motif file" and "consensus" empty to switch this off.
+known motifs:
+  motif file: null            # MEME-format file, e.g. input/known_motifs.meme
+                              # (JASPAR/TRANSFAC: convert with jaspar2meme / transfac2meme)
+  consensus: {}               # IUPAC consensus sequences, NAME: SEQUENCE, e.g.
+                              #   sigma70_-10: TATAAT
+                              #   sigma70_-35: TTGACA
+  consensus mismatch: 0.05    # probability given to a non-matching base in a consensus motif
+  positions: {}               # optional: expected motif START relative to the TSS (TSS = 0), e.g.
+                              #   sigma70_-10: [-13, -10]
+                              # not given = learned from where the motif hits the _1 promoters
+  use de novo motifs: true    # false = rescue with the known motifs only (MEME is not run)

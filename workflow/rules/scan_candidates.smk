@@ -22,8 +22,16 @@ SC_TSS_DIR = "results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}"
 SC_PM_DIR = "results/promoter_motifs/{sample}_{ident}"
 
 # one motif file for scan_background and scan_candidates; may contain
-# {sample} / {ident}. Default: the MEME output of discover_motifs.
-SC_MOTIF_FILE = SC_MB.get("motif file") or SC_PM_DIR + "/meme/meme.txt"
+# {sample} / {ident}. Default: the MEME output of discover_motifs, or, when
+# known motifs are given ("known motifs" in the config), the combined file of
+# combine_motifs (de novo + known, rules/knownMotifs.smk).
+_SC_KM = config.get("known motifs") or {}
+if SC_MB.get("motif file"):
+    SC_MOTIF_FILE = SC_MB["motif file"]
+elif _SC_KM.get("motif file") or _SC_KM.get("consensus"):
+    SC_MOTIF_FILE = SC_PM_DIR + "/motifs/scan_motifs.meme"
+else:
+    SC_MOTIF_FILE = SC_PM_DIR + "/meme/meme.txt"
 
 
 def _phage_records(wc):

@@ -6,6 +6,7 @@ include: 'rules/determineTranscriptionBoundries.smk'
 include: 'rules/promoterMotifs.smk'
 include: 'rules/motifs.smk'
 include: 'rules/scan_candidates.smk'
+include: 'rules/knownMotifs.smk'
 include: 'rules/scanBackground.smk'
 include: 'rules/rescue_tss.smk'
 rule all:
