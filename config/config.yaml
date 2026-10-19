@@ -61,6 +61,14 @@ candidate selection:
 
 motif rescue:
   target fpr: 0.05  #standard value from literature => check with "ground truth"
+                    # = false-positive rate of the whole rescue (any motif), not per motif
+  motifs: null              # null = automatic selection (below); or a list, e.g. [MEME-1]
+  max evalue: null          # e.g. 0.05 once enough _1 promoters are pooled; null = no E-value filter
+  min training sites: 3     # a motif needs at least this many MEME sites in the _1 windows
+  max site spread: 12       # ... and those sites within this many nt of each other (positional)
+  position rule: auto       # auto = where MEME found the motif in the _1 windows (+- slack)
+                            # off = anywhere in the window; [26, 41] = fixed range of hit starts
+  position slack: 3         # nt added on both sides of the training-site range
 
 TU detection:
   TSS window: 5        # a read starts "at" a TSS if its 5' end is within this many nt

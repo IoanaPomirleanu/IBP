@@ -23,9 +23,13 @@ Everything runs from `rule all` (target `results/promoter_motifs/{sample}_{ident
 - **`fimo_cand0.tsv`**: FIMO `--text` output:
   - `sequence_name` = candidate name, matches column 4 of `cand0.bed`
   - `start` / `stop` = 1-based positions **inside the 55-nt window**
-  - windows are oriented 5'→3' along the transcript on both strands
-    (window = TSS−50 … TSS+4), so the **TSS is window position 51** on + and −
-  - position relative to the TSS = `start − 51` (e.g. a hit at 37–51 spans −14…0)
+  - windows are oriented 5'->3' along the transcript on both strands
+    (window = TSS-50 ... TSS+4 with upstream 50 / downstream 5). annotateTSS builds
+    + windows as [TSS-50, TSS+5) and - windows as [TSS-5, TSS+50), so after reverse
+    complementing the TSS is window position **51 on +** but **50 on -** (1 nt shift).
+  - position relative to the TSS ~ `start - 51` (+) / `start - 50` (-)
+  - rescue_tss works in window positions only (training sites, _0 hits and random
+    windows share the same geometry), so the 1-nt shift is absorbed by the slack.
 - `cand0_table.tsv`: every `_0` candidate with TSS, enriched reads, ratio and the
   filter outcome (selected / low_ratio / …), for checking the selection.
 
@@ -57,8 +61,19 @@ candidate selection:
 - `background_model` / `scan_background` use `config["fasta file"]` (host + phage + spike-in):
   the background composition and ~99% of the random windows then come from the host.
   Restrict both to the phage record(s). Also `2 > {log}` should be `2> {log}`.
-- `cand1.bed` (for `rescue_tss`) is not produced yet.
 - `scan_background` should read the same motif file:
   `results/promoter_motifs/{sample}_{ident}/meme/meme.txt` (not `test/test_motif.meme`).
 - LUZ7 t5 alone gives 5 independent `_1` promoters; MEME-1 is positionally conserved
   but not significant (E = 4.0). Pool `_1` windows over timepoints/replicates next.
+
+## rescue_tss: motif selection and position rule
+
+- `rescue/motif_selection.tsv`: per motif the MEME E-value, the training-site starts
+  in the `_1` windows, and whether it is used. Used = >= `min training sites` sites
+  within `max site spread` nt of each other (and E <= `max evalue` if set), or listed
+  in `motifs`.
+- A hit only counts if its start lies in [min training start - slack, max + slack]
+  (`position rule: auto`), the same rule on the random windows and on the `_0` windows.
+- Cut-offs are lowered jointly until the fraction of random windows with a hit of ANY
+  used motif is <= `target fpr`, so `target fpr` is the rate of the whole rescue.
+- `tss_tiers.tsv` has a `tss` column (same convention as the enr_ratios csv).
