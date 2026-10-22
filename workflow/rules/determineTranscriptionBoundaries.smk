@@ -27,8 +27,8 @@ rule termseqPeakCalling:
         "../envs/env_transcription_boundaries.yaml"
     shell:
         """
-        chmod +x ./peak_calling.py
-        ./peak_calling.py {input} {output} {params.symb}
+        chmod +x {workflow.basedir}/scripts/peak_calling.py
+        {workflow.basedir}/scripts/peak_calling.py {input} {output} {params.symb}
         """
 # retrieves genome coverage information about the peaks found
 rule combineCovAndPeaks:
@@ -69,7 +69,7 @@ rule clusterReads:
         symb=lambda x: signToSymbol[x.sign]
     shell:
         """
-        chmod +x peak_clustering.r
-        ./peak_clustering.r {input} {params.symb} {params.cluster_width} {params.minimum_coverage} {output}
+        chmod +x {workflow.basedir}/scripts/peak_clustering.r
+        {workflow.basedir}/scripts/peak_clustering.r {input} {params.symb} {params.cluster_width} {params.minimum_coverage} {output}
         """
 
