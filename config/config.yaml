@@ -54,21 +54,21 @@ motifs:
   # genome fasta: input/genome_data/PHAGE.fasta
   # genome records: [PHAGE]
 
-# --- FIMO scans, shared by scan_background and scan_candidates -----------------
+# --- FIMO scans, shared by scanBackground and scanCandidates -----------------
 motif background:
   n random windows: 1000
   fimo threshold: 0.001
   fimo options: "--norc"   # windows are already oriented 5'->3'
   # no "motif file" line: both scans use the MEME output (plus known motifs, if given)
 
-# --- _0 candidates to scan (rules/scan_candidates.smk) -------------------------
+# --- _0 candidates to scan (rules/scanCandidates.smk) -------------------------
 candidate selection:
   phage records: null       # null = the Sample name
   min enriched reads: 0
   min enrichment ratio: 1.0
   exclude near _1: 0        # drop _0 within this many nt of a _1 (same strand); 0 = keep all
 
-# --- rescue of _0 candidates by motif (rules/rescue_tss.smk) -------------------
+# --- rescue of _0 candidates by motif (rules/rescueTSS.smk) -------------------
 motif rescue:
   target fpr: 0.05          # false-positive rate of the whole rescue (any motif), from random windows
   motifs: null              # null = automatic selection (below); or a list, e.g. [MEME-1]
@@ -94,7 +94,7 @@ known motifs:
                               # not given = learned from where the motif hits the _1 promoters
   use de novo motifs: true    # false = rescue with the known motifs only (MEME is not run)
 
-# --- transcription units (rules/detectTUs.smk) ---------------------------------
+# --- transcription units (rules/detectTU.smk) ---------------------------------
 TU detection:
   TSS window: 5             # a read starts "at" a TSS if its 5' end is within this many nt
   TTS window: 20            # a read ends "at" a TTS if its 3' end is within this many nt

@@ -1,18 +1,18 @@
 # =============================================================================
 #  Promoter motif discovery (per {sample}_{ident})
 #
-#  dedup_training         : collapse redundant _1 training windows
-#  motif_background_model : composition model of the phage genome
-#  discover_motifs        : MEME on the deduplicated _1 windows
-#  (candidate selection and FIMO scanning: rules/scan_candidates.smk)
+#  dedupTraining         : collapse redundant _1 training windows
+#  motifBackgroundModel : composition model of the phage genome
+#  discoverMotifs        : MEME on the deduplicated _1 windows
+#  (candidate selection and FIMO scanning: rules/scanCandidates.smk)
 #
 #  Input : results/promoter_motifs/{sample}_{ident}/meme_training.fa
 #          (_1 windows, rule selectAboveThresholdSequences)
 #  Output: results/promoter_motifs/{sample}_{ident}/meme/meme.txt
-#          = the default "motif file" of scan_candidates (and scan_background)
+#          = the default "motif file" of scanCandidates (and scanBackground)
 #
 #  Include from workflow/Snakefile:   include: "rules/motifs.smk"
-#  Target: motifs_all (all samples in the config), or the meme.txt path
+#  Target: motifsAll (all samples in the config), or the meme.txt path
 # =============================================================================
 import os
 
@@ -22,7 +22,7 @@ MOT_SCRIPTS = os.path.join(workflow.basedir, "scripts")
 MOT_ORDER = MOT.get("markov order", 2)
 
 
-rule motifs_all:
+rule motifsAll:
     input:
         expand(MOT_DIR + "/meme/meme.txt",
                sample=config["Sample name"], ident=config["ID"]),
@@ -31,7 +31,7 @@ rule motifs_all:
 # ---------------------------------------------------------------------------
 # training windows
 # ---------------------------------------------------------------------------
-rule dedup_training:
+rule dedupTraining:
     input:
         MOT_DIR + "/meme_training.fa",
     output:
@@ -53,7 +53,7 @@ rule dedup_training:
 # Genome: "genome fasta" (default: "fasta file"). Records: "genome records"
 # (default: the records named in the training headers, e.g. LUZ7), so a
 # concatenated host + phage + spike-in FASTA is reduced to the phage.
-rule motif_background_model:
+rule motifBackgroundModel:
     input:
         genome=MOT.get("genome fasta") or config["fasta file"],
         training=MOT_DIR + "/meme_training.fa",
@@ -65,7 +65,7 @@ rule motif_background_model:
         order=MOT_ORDER,
         records=("--records " + " ".join(MOT["genome records"])) if MOT.get("genome records") else "",
     log:
-        "logs/motifs/{sample}_{ident}/background_model.log",
+        "logs/motifs/{sample}_{ident}/backgroundModel.log",
     conda:
         "../envs/env_motif.yaml"
     shell:
@@ -76,10 +76,10 @@ rule motif_background_model:
         """
 
 
-rule discover_motifs:
+rule discoverMotifs:
     input:
-        training=rules.dedup_training.output[0],
-        bfile=rules.motif_background_model.output.model,
+        training=rules.dedupTraining.output[0],
+        bfile=rules.motifBackgroundModel.output.model,
     output:
         MOT_DIR + "/meme/meme.txt",
     params:

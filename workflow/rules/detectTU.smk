@@ -3,7 +3,7 @@
 # One TSS can give several TUs (read-through). A TSS whose reads end at no TTS gets one TU up to its furthest read 3' end.
 # All positions below are 1-based; "points" are 1-nt BED intervals (pos-1, pos).
 
-# 1. one point per TSS in the final TSS set (tier 1 = _1, tier 2 = rescued _0, from rescue_tss), phage contig only
+# 1. one point per TSS in the final TSS set (tier 1 = _1, tier 2 = rescued _0, from rescueTSS), phage contig only
 #    (contig name contains the sample name, e.g. LUZ7). TSS window: + [pos-up, pos+down], - [pos-down, pos+up]
 rule tssPoints:
     input:

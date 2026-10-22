@@ -19,7 +19,7 @@ def aggregate_input(wildcards):
     checkpoint_output = checkpoints.getGenomeFiles.get(**wildcards).output[0]
     return expand("results/transcript_boundaries/gfiles/{i}_genome.txt", i=glob_wildcards(os.path.join(checkpoint_output, "{i}_genome.txt")).i)
 
-rule PosEffRatios:
+rule posEffRatios:
     input: 
         '{sample}_peak_calling/{sample}_enriched_{ident}.3end.plus.peaks.oracle.narrowPeak.counts.clustered.csv',
         'results/alignments/BAM_files_{sample}/{sample}_enriched_{ident}.sorted.bam',
@@ -61,7 +61,7 @@ rule PosEffRatios:
             fi
         done
         """
-rule NegEffRatios:
+rule negEffRatios:
     input: 
         '{sample}_peak_calling/{sample}_enriched_{ident}.3end.minus.peaks.oracle.narrowPeak.counts.clustered.csv',
         'results/alignments/BAM_files_{sample}/{sample}_enriched_{ident}.sorted.bam',
@@ -102,7 +102,7 @@ rule NegEffRatios:
             fi
         done
         """
-rule PosCoverageDropToBed:
+rule posCoverageDropToBed:
     input: 'results/transcript_boundaries/TTS_{sample}/TTS_{sample}_{ident}/eff_ratios_{sample}_{ident}.plus.drop.coverage'
     output: temp('results/transcript_boundaries/TTS_{sample}/TTS_{sample}_{ident}/TTS_{sample}_{ident}.plus.bed')
     params:
@@ -113,7 +113,7 @@ rule PosCoverageDropToBed:
         awk -v up={params.up} -v down={params.down} -v FS='\t' -v OFS='\t' -F ' ' '{{print $1, $2 - up, $2 + down, "TTS_POS_" NR,0 , "+"}}' {input} | uniq > {output}
         sed -i 's/\"//g' {output}
         """
-rule NegCoverageDropToBed:
+rule negCoverageDropToBed:
     input: 'results/transcript_boundaries/TTS_{sample}/TTS_{sample}_{ident}/eff_ratios_{sample}_{ident}.minus.drop.coverage'
     output: temp('results/transcript_boundaries/TTS_{sample}/TTS_{sample}_{ident}/TTS_{sample}_{ident}.minus.bed')
     params:

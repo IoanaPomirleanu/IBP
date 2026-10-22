@@ -2,14 +2,13 @@ configfile: './config/config.yaml'
 include: 'rules/mapReads.smk'
 include: 'rules/annotateTSS.smk'
 include: 'rules/annotateTTS.smk'
-include: 'rules/determineTranscriptionBoundries.smk'
-include: 'rules/promoterMotifs.smk'
+include: 'rules/determineTranscriptionBoundaries.smk'
 include: 'rules/motifs.smk'
-include: 'rules/scan_candidates.smk'
+include: 'rules/scanCandidates.smk'
 include: 'rules/knownMotifs.smk'
 include: 'rules/scanBackground.smk'
-include: 'rules/rescue_tss.smk'
-include: 'rules/detectTUs.smk'
+include: 'rules/rescueTSS.smk'
+include: 'rules/detectTU.smk'
 rule all:
     input: 
         expand("results/processed_fastq/pychopper/pychopper_{sample}_{ident}/{sample}_{cond}_{ident}_full_length_output.fq", sample=config["Sample name"], ident=config["ID"], cond=["enriched", "control"]),

@@ -28,7 +28,7 @@ Outputs
   --out-ids    cand0_ids.tsv  (ID -> candidate name)
                FIMO 5.5 reads names such as "X::chr:1-55(+)" or "TSS_POS_4_0" as genomic
                coordinates and shifts the hit positions; plain IDs avoid that, and
-               scan_candidates maps the IDs back to the candidate names afterwards.
+               scanCandidates maps the IDs back to the candidate names afterwards.
   --out-table  cand0_table.tsv  (name, TSS, reads, ratio, filter outcome)
 """
 import argparse
@@ -38,7 +38,7 @@ from collections import Counter, defaultdict
 
 
 def log(msg):
-    print(f"[select_cand0] {msg}", file=sys.stderr)
+    print(f"[selectCand0] {msg}", file=sys.stderr)
 
 
 def read_peaks(path):
@@ -49,7 +49,7 @@ def read_peaks(path):
                 continue
             p = line.rstrip("\n").split("\t")
             if len(p) < 6:
-                sys.exit(f"[select_cand0] {path}:{n}: expected BED6, got {len(p)} columns")
+                sys.exit(f"[selectCand0] {path}:{n}: expected BED6, got {len(p)} columns")
             rows.append(dict(chrom=p[0], start=int(p[1]), end=int(p[2]), name=p[3],
                              strand=p[5].strip(), fields=p))
     return rows
@@ -139,7 +139,7 @@ def main():
     records = set(a.records)
     present = {p["chrom"] for p in peaks}
     if not records & present:
-        sys.exit(f"[select_cand0] none of the records {sorted(records)} occur in {a.peaks}; "
+        sys.exit(f"[selectCand0] none of the records {sorted(records)} occur in {a.peaks}; "
                  f"records present: {', '.join(sorted(present))}")
 
     have_ratios = bool(a.ratios)
@@ -150,7 +150,7 @@ def main():
             p["reads"] = p["ratio"] = None
             p["tss"] = None
     if (a.min_reads or a.min_ratio) and not have_ratios:
-        sys.exit("[select_cand0] --min-reads/--min-ratio need the enr_ratios csv files")
+        sys.exit("[selectCand0] --min-reads/--min-ratio need the enr_ratios csv files")
 
     ones = defaultdict(list)
     for p in peaks:

@@ -1,7 +1,7 @@
 # =============================================================================
-# select_cand0 + scan_candidates
+# selectCand0 + scanCandidates
 #
-# select_cand0
+# selectCand0
 #   Pick the _0 TSS candidates (peaks below the spike-in threshold) on the
 #   phage genome. Their windows are taken from the same TSS_seq_*.fa.out file
 #   as meme_training.fa, so _0 and _1 windows have identical geometry.
@@ -9,10 +9,10 @@
 #   candidates are scanned: expected false rescues = background hit rate x
 #   number of _0 candidates scanned.
 #
-# scan_candidates
+# scanCandidates
 #   FIMO on the _0 windows with exactly the same motif file, background file,
-#   threshold and options as scan_background, so the cut-offs calibrated on
-#   the random windows apply directly to these hits (rescue_tss).
+#   threshold and options as scanBackground, so the cut-offs calibrated on
+#   the random windows apply directly to these hits (rescueTSS).
 # =============================================================================
 
 SC_MB = config["motif background"]
@@ -21,10 +21,10 @@ SC_CS = config.get("candidate selection", {})
 SC_TSS_DIR = "results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}"
 SC_PM_DIR = "results/promoter_motifs/{sample}_{ident}"
 
-# one motif file for scan_background and scan_candidates; may contain
-# {sample} / {ident}. Default: the MEME output of discover_motifs, or, when
+# one motif file for scanBackground and scanCandidates; may contain
+# {sample} / {ident}. Default: the MEME output of discoverMotifs, or, when
 # known motifs are given ("known motifs" in the config), the combined file of
-# combine_motifs (de novo + known, rules/knownMotifs.smk).
+# combineMotifs (de novo + known, rules/knownMotifs.smk).
 _SC_KM = config.get("known motifs") or {}
 if SC_MB.get("motif file"):
     SC_MOTIF_FILE = SC_MB["motif file"]
@@ -39,7 +39,7 @@ def _phage_records(wc):
     return " ".join(recs) if recs else wc.sample
 
 
-rule select_cand0:
+rule selectCand0:
     input:
         peaks=SC_TSS_DIR + "/{sample}_enriched_{ident}_peaks.bed",
         seqs=SC_TSS_DIR + "/TSS_seq_{sample}_enriched_{ident}.fa.out",
@@ -58,7 +58,7 @@ rule select_cand0:
         min_ratio=SC_CS.get("min enrichment ratio", 1.0),
         near1=SC_CS.get("exclude near _1", 0),
     log:
-        "logs/select_cand0/{sample}_{ident}.log",
+        "logs/selectCand0/{sample}_{ident}.log",
     conda:
         "../envs/env_scan_background.yaml"
     shell:
@@ -70,12 +70,12 @@ rule select_cand0:
         "--out-ids {output.ids} --out-table {output.table} 2> {log}"
 
 
-rule scan_candidates:
+rule scanCandidates:
     input:
-        fa=rules.select_cand0.output.scan_fa,   # short IDs: FIMO can't misread them
-        ids=rules.select_cand0.output.ids,
+        fa=rules.selectCand0.output.scan_fa,   # short IDs: FIMO can't misread them
+        ids=rules.selectCand0.output.ids,
         motifs=SC_MOTIF_FILE,
-        bg=SC_PM_DIR + "/bg.txt",                 # from background_model
+        bg=SC_PM_DIR + "/bg.txt",                 # from backgroundModel
     output:
         fimo=SC_PM_DIR + "/fimo_cand0.tsv",
     params:
@@ -84,7 +84,7 @@ rule scan_candidates:
         thresh=SC_MB["fimo threshold"],
         fimo_opts=SC_MB["fimo options"],
     log:
-        "logs/scan_candidates/{sample}_{ident}.log",
+        "logs/scanCandidates/{sample}_{ident}.log",
     conda:
         "../envs/env_scan_background.yaml"
     shell:
@@ -92,7 +92,7 @@ rule scan_candidates:
         (
         if grep -q '^MOTIF' {input.motifs} && [ -s {input.fa} ]; then
             echo "scanning $(grep -c '>' {input.fa}) _0 windows with $(grep -c '^MOTIF' {input.motifs}) motif(s)" >&2
-            # identical settings to scan_background
+            # identical settings to scanBackground
             fimo --text {params.fimo_opts} --thresh {params.thresh} --bgfile {input.bg} \
                 {input.motifs} {input.fa} > {params.raw}
             # window IDs -> candidate names (positions stay 1..window length)

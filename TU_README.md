@@ -7,7 +7,7 @@ A TU runs from a TSS to a downstream TTS on the same strand, and is kept only if
 - A TSS whose reads end at no TTS gets one TU up to its **furthest read 3' end** ("longest read").
 - No distance cut-off is needed: the reads decide which TTS belongs to which TSS.
 
-## Rules (`workflow/rules/detectTUs.smk`)
+## Rules (`workflow/rules/detectTU.smk`)
 
 | Step | Rule | What it does |
 |---|---|---|
@@ -22,16 +22,16 @@ A TU runs from a TSS to a downstream TTS on the same strand, and is kept only if
 
 Steps 1, 2, 6, 7 are awk only; steps 3-5 and 8 use `envs/env_tu.yaml` (bedtools + samtools).
 
-**Phage filter:** steps 1 and 3 keep only contigs whose name contains the sample name (`index($1, "{wildcards.sample}")`, as in `promoterMotifs.smk`), so `Sample name` must be part of the phage contig name (e.g. `LUZ7`). Host and spike-in are left out.
+**Phage filter:** steps 1 and 3 keep only contigs whose name contains the sample name (`index($1, "{wildcards.sample}")`, as in `annotateTSS.smk`), so `Sample name` must be part of the phage contig name (e.g. `LUZ7`). Host and spike-in are left out.
 
 **Which TSSs:** tiers 1 and 2 only. Tier 3 (`_0` not rescued) is treated as "not a TSS" and gets no TU. `tss_tiers.tsv` lists all three tiers; `tss_final.bed` is tiers 1 + 2.
 
-**Close TSSs are not merged:** `dedup_training` (10 nt) only affects the MEME training set. Two TSSs a few nt apart (e.g. LUZ7 100 and 107) and terminal-repeat copies (100 and 74341) each get their own TUs.
+**Close TSSs are not merged:** `dedupTraining` (10 nt) only affects the MEME training set. Two TSSs a few nt apart (e.g. LUZ7 100 and 107) and terminal-repeat copies (100 and 74341) each get their own TUs.
 
 ## Setup
 
 New files:
-- `workflow/rules/detectTUs.smk`
+- `workflow/rules/detectTU.smk`
 - `workflow/envs/env_tu.yaml`
 
 `config/config.yaml` (block in `config/config_TU.yaml`; make sure the line before it ends with a newline):
@@ -51,7 +51,7 @@ TU detection:
 
 `workflow/Snakefile`:
 ```
-include: 'rules/detectTUs.smk'
+include: 'rules/detectTU.smk'
 ```
 and in `rule all`:
 ```
@@ -59,7 +59,7 @@ and in `rule all`:
 ```
 (Without a GFF, use `TU_{sample}_{ident}.tsv` instead: steps 1-7 only.)
 
-Step 1 needs `tss_final.bed`, so `rescue_tss` (and the motif rules before it) must be included too; Snakemake runs them first if the file doesn't exist.
+Step 1 needs `tss_final.bed`, so `rescueTSS` (and the motif rules before it) must be included too; Snakemake runs them first if the file doesn't exist.
 
 ## Run
 

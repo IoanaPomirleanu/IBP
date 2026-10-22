@@ -74,7 +74,7 @@ def safe(name):
 
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--denovo", default=None, help="meme.txt of discover_motifs (optional)")
+ap.add_argument("--denovo", default=None, help="meme.txt of discoverMotifs (optional)")
 ap.add_argument("--known-file", default=None, help="MEME-format file with known motifs")
 ap.add_argument("--consensus", nargs="*", default=[], help="NAME=IUPAC ...")
 ap.add_argument("--mismatch", type=float, default=0.05)

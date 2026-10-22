@@ -1,15 +1,15 @@
 # =============================================================================
 #  Known (user-supplied) promoter motifs
 #
-#  combine_motifs : one motif file for both FIMO scans = de novo MEME motifs
+#  combineMotifs : one motif file for both FIMO scans = de novo MEME motifs
 #                   (optional) + known motifs (KNOWN-<name>), from a MEME-format
 #                   file and/or IUPAC consensus sequences in the config
-#  scan_training  : FIMO on the deduplicated _1 windows, so rescue_tss can see
+#  scanTraining  : FIMO on the deduplicated _1 windows, so rescueTSS can see
 #                   where each known motif sits relative to the TSS (and how many
 #                   _1 promoters it hits)
 #
 #  Active only when "known motifs" has a "motif file" or "consensus" entry.
-#  The motif file then used by scan_background and scan_candidates is
+#  The motif file then used by scanBackground and scanCandidates is
 #  results/promoter_motifs/{sample}_{ident}/motifs/scan_motifs.meme, so the
 #  known motifs get the same random-window calibration as the de novo ones.
 # =============================================================================
@@ -42,7 +42,7 @@ def _km_args(wc, input):
     return " ".join(o)
 
 
-rule combine_motifs:
+rule combineMotifs:
     input:
         unpack(_km_inputs),
     output:
@@ -52,7 +52,7 @@ rule combine_motifs:
         script=workflow.basedir + "/scripts/prepare_known_motifs.py",
         args=_km_args,
     log:
-        "logs/combine_motifs/{sample}_{ident}.log",
+        "logs/combineMotifs/{sample}_{ident}.log",
     conda:
         "../envs/env_scan_background.yaml"
     shell:
@@ -60,7 +60,7 @@ rule combine_motifs:
         "--out {output.motifs} --out-list {output.known} 2> {log}"
 
 
-rule scan_training:
+rule scanTraining:
     input:
         fa="results/promoter_motifs/{sample}_{ident}/discovery/meme_training_dedup.fa",
         motifs=KM_DIR + "/scan_motifs.meme",
@@ -73,7 +73,7 @@ rule scan_training:
         thresh=config["motif background"]["fimo threshold"],
         fimo_opts=config["motif background"]["fimo options"],
     log:
-        "logs/scan_training/{sample}_{ident}.log",
+        "logs/scanTraining/{sample}_{ident}.log",
     conda:
         "../envs/env_scan_background.yaml"
     shell:

@@ -1,8 +1,8 @@
-# rescue_tss
+# rescueTSS
 # Decide which _0 TSS candidates to rescue based on promoter motifs.
 # Only positionally conserved motifs are used, and a hit only counts at the
 # position where MEME found the motif in the _1 promoters (motif_selection.tsv).
-# Motif p-value cutoffs are calibrated on random genomic windows (scan_background)
+# Motif p-value cutoffs are calibrated on random genomic windows (scanBackground)
 # with the same position rule, so the false-positive rate of the rescue as a
 # whole (any motif) is measured, not assumed.
 # Output: final table with a tier column (1 = _1 TSS, 2 = rescued _0, 3 = _0 not rescued).
@@ -56,13 +56,13 @@ def _rescue_opts(wc):
     return " ".join(o)
 
 
-rule rescue_tss:
+rule rescueTSS:
     input:
         unpack(_rescue_known_inputs),                      # known motifs only
         random_fimo = "results/promoter_motifs/{sample}_{ident}/background/fimo_random.tsv",
         random_fa   = "results/promoter_motifs/{sample}_{ident}/background/random.fa",
-        cand0_fimo  = rules.scan_candidates.output.fimo,  # takes whatever file scan_candidates writes as it's fimo output
-        cand0_bed   = rules.select_cand0.output.bed,
+        cand0_fimo  = rules.scanCandidates.output.fimo,  # takes whatever file scanCandidates writes as it's fimo output
+        cand0_bed   = rules.selectCand0.output.bed,
         tss_fa      = SC_TSS_DIR + "/TSS_seq_{sample}_enriched_{ident}.fa.out",
         motifs      = _rescue_meme_file,                   # training sites + E-values
         scan_motifs = SC_MOTIF_FILE,                       # the file both scans used
@@ -82,7 +82,7 @@ rule rescue_tss:
         opts       = _rescue_opts,
         outdir     = "results/promoter_motifs/{sample}_{ident}/rescue",
     log:
-        "logs/rescue_tss/{sample}_{ident}.log"
+        "logs/rescueTSS/{sample}_{ident}.log"
     conda:
         "../envs/env_scan_background.yaml"
     shell:

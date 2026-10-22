@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-rescue_tss: rescue _0 TSS candidates that have a promoter motif at the right place.
+rescueTSS: rescue _0 TSS candidates that have a promoter motif at the right place.
 
 0. Motif selection (motif_selection.tsv)
    For every motif in the motif file, MEME's training sites (the _1 windows) give
