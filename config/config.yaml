@@ -1,67 +1,76 @@
-Sample name: LUZ7
-fasta file: input/genome_data/LUZ7_US449_spikein.fasta
-enriched fastq: input/fastq_data/LUZ7_US449_t5_enriched.fastq
-control fastq: input/fastq_data/LUZ7_US449_t5_control.fastq
-ID: t5
-termseq alpha: 0.001
-spike-in name: FLuc
+# =============================================================================
+#  ONT-cappable-seq phage pipeline - default config
+#  Per dataset, put only the keys that differ in a small file and run
+#    snakemake --use-conda --cores 8 --configfile config/<dataset>.yaml
+#  Sample name and ID: no "_" (file names are built as {sample}_{ID}).
+# =============================================================================
 
-cluster width:
+# --- input -------------------------------------------------------------------
+Sample name: PHAGE      # must be part of the phage contig name in the FASTA (e.g. LUZ7, 14-1)
+ID: t5                  # time point / replicate label
+fasta file: input/genome_data/PHAGE_host_spikein.fasta   # phage + host + spike-in, concatenated
+enriched fastq: input/fastq_data/PHAGE_enriched.fastq
+control fastq: input/fastq_data/PHAGE_control.fastq
+spike-in name: FLuc     # part of the spike-in contig name; its TSS enrichment ratio = TSS threshold
+
+# --- peak calling (original pipeline) ----------------------------------------
+termseq alpha: 0.001    # not read by any rule at the moment
+
+cluster width:          # 5' / 3' ends within this many nt form one peak
   TSS: 5
   TTS: 25
 
-minimum coverage: 
+minimum coverage:       # reads needed at a peak
   enriched:
     TSS: 5
     TTS: 20
   control:
     TSS: 5
     TTS: 20
-    
-peak alignment error: 1
-spike-in name: FLuc
-TTS threshold: 0.20
 
-TSS sequence extraction:
+peak alignment error: 1 # max nt between an enriched and a control TSS peak to pair them
+TTS threshold: 0.20     # minimum termination efficiency (coverage drop) to keep a TTS
+
+# --- sequence windows ----------------------------------------------------------
+TSS sequence extraction:   # promoter window around each TSS (MEME, FIMO); TSS at position upstream+1
   upstream: 50
   downstream: 5
 
-TTS sequence extraction:
+TTS sequence extraction:   # terminator window around each TTS
   upstream: 50
   downstream: 50
 
-
+# --- motif discovery on the _1 TSSs (rules/motifs.smk) -------------------------
 motifs:
-  dedup distance: 10            # windows closer than this are one promoter
-  min sequences: 5              # independent windows needed to run MEME
+  dedup distance: 10    # _1 windows closer than this count as one promoter (MEME training only)
+  min sequences: 5      # independent windows needed to run MEME
   nmotifs: 3
   minw: 6
   maxw: 20
   mode: zoops
-  markov order: 2
+  markov order: 2       # background model order
   # optional: genome for the background model. Default: "fasta file", reduced
-  # to the records named in the training headers (e.g. LUZ7)
-  # genome fasta: input/genome_data/LUZ7.fasta
-  # genome records: [NC_013691.1]
+  # to the phage record(s) named in the training headers
+  # genome fasta: input/genome_data/PHAGE.fasta
+  # genome records: [PHAGE]
 
-# --- shared by scan_background and scan_candidates --------------------------
+# --- FIMO scans, shared by scan_background and scan_candidates -----------------
 motif background:
   n random windows: 1000
   fimo threshold: 0.001
-  fimo options: "--norc"
-  # no "motif file" line: both scans then use
-  # results/promoter_motifs/{sample}_{ident}/meme/meme.txt
+  fimo options: "--norc"   # windows are already oriented 5'->3'
+  # no "motif file" line: both scans use the MEME output (plus known motifs, if given)
 
-# --- _0 candidate selection (rules/scan_candidates.smk) ---------------------
+# --- _0 candidates to scan (rules/scan_candidates.smk) -------------------------
 candidate selection:
-  phage records: null           # null = the {sample} name (e.g. LUZ7)
+  phage records: null       # null = the Sample name
   min enriched reads: 0
   min enrichment ratio: 1.0
-  exclude near _1: 0
+  exclude near _1: 0        # drop _0 within this many nt of a _1 (same strand); 0 = keep all
 
+# --- rescue of _0 candidates by motif (rules/rescue_tss.smk) -------------------
 motif rescue:
-  target fpr: 0.05  #standard value from literature => check with "ground truth"
-                    # = false-positive rate of the whole rescue (any motif), not per motif
+  target fpr: 0.05          # false-positive rate of the whole rescue (any motif), from random windows
   motifs: null              # null = automatic selection (below); or a list, e.g. [MEME-1]
   max evalue: null          # e.g. 0.05 once enough _1 promoters are pooled; null = no E-value filter
   min training sites: 3     # a motif needs at least this many MEME sites in the _1 windows
@@ -70,8 +79,8 @@ motif rescue:
                             # off = anywhere in the window; [26, 41] = fixed range of hit starts
   position slack: 3         # nt added on both sides of the training-site range
 
-# --- known promoter motifs (rules/knownMotifs.smk) ---------------------------
-# Motifs the user already knows (literature, databases, a related phage).
+# --- known promoter motifs (rules/knownMotifs.smk) -----------------------------
+# Motifs from literature, databases or a related phage.
 # Leave both "motif file" and "consensus" empty to switch this off.
 known motifs:
   motif file: null            # MEME-format file, e.g. input/known_motifs.meme
@@ -85,12 +94,12 @@ known motifs:
                               # not given = learned from where the motif hits the _1 promoters
   use de novo motifs: true    # false = rescue with the known motifs only (MEME is not run)
 
+# --- transcription units (rules/detectTUs.smk) ---------------------------------
 TU detection:
-  TSS window: 5        # a read starts "at" a TSS if its 5' end is within this many nt
-  TTS window: 20       # a read ends "at" a TTS if its 3' end is within this many nt
-  minimum reads: 1     # reads needed to keep a TSS -> TTS pair
-  # step 8, genes per TU
-  gene annotation: input/genome_data/LUZ7.gff3   # GFF of the phage genes only (e.g. NCBI NC_013691.1)
-  gene features: gene                           # GFF column 3 types to use, e.g. "gene" or "gene|ncRNA"
-  gene name attribute: Name                     # attribute shown as the gene name, e.g. Name or locus_tag
-  gene overlap fraction: 0.9                    # fraction of a gene that must lie inside the TU (papers: 0.9)
+  TSS window: 5             # a read starts "at" a TSS if its 5' end is within this many nt
+  TTS window: 20            # a read ends "at" a TTS if its 3' end is within this many nt
+  minimum reads: 1          # reads needed to keep a TSS -> TTS pair
+  gene annotation: input/genome_data/PHAGE.gff3   # GFF3 of the phage genes only
+  gene features: gene       # GFF column 3 types to use, e.g. "gene" or "gene|ncRNA"
+  gene name attribute: Name # attribute shown as the gene name, e.g. Name or locus_tag
+  gene overlap fraction: 0.9  # fraction of a gene that must lie inside the TU (papers: 0.9)
