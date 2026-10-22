@@ -77,3 +77,22 @@ candidate selection:
 - Cut-offs are lowered jointly until the fraction of random windows with a hit of ANY
   used motif is <= `target fpr`, so `target fpr` is the rate of the whole rescue.
 - `tss_tiers.tsv` has a `tss` column (same convention as the enr_ratios csv).
+
+## Known motifs (rules/knownMotifs.smk)
+
+Motifs the user already knows can be added in the config (`known motifs:`), as a
+MEME-format file (`motif file`; JASPAR/TRANSFAC can be converted with `jaspar2meme` /
+`transfac2meme`) and/or IUPAC consensus sequences (`consensus: {sigma70_-10: TATAAT}`).
+
+- `combine_motifs` writes `motifs/scan_motifs.meme` = de novo MEME motifs (unless
+  `use de novo motifs: false`) + the known motifs, renamed `KNOWN-<name>`. Both FIMO
+  scans (random windows and `_0` candidates) use this file, so known motifs get the
+  same calibration and share the same `target fpr`.
+- `scan_training` scans the deduplicated `_1` windows: `motif_selection.tsv` then shows
+  how many `_1` promoters each known motif hits (a sanity check that it fits this phage).
+- Known motifs are always used. Position rule: `positions:` in the config (motif start
+  relative to the TSS, TSS = 0), otherwise learned from the `_1` hits (same
+  `min training sites` / `max site spread` rules); if neither works the motif counts
+  anywhere in the window, which needs a strict cut-off and rarely rescues - set a position.
+- With `use de novo motifs: false` MEME is not run: useful when there are too few `_1`
+  promoters for discovery.

@@ -8,6 +8,27 @@
 # Output: final table with a tier column (1 = _1 TSS, 2 = rescued _0, 3 = _0 not rescued).
 
 RESCUE = config.get("motif rescue", {})
+_RS_KM = config.get("known motifs") or {}
+_RS_KM_ON = bool(_RS_KM.get("motif file") or _RS_KM.get("consensus"))
+
+
+def _rescue_known_inputs(wc):
+    """known-motif inputs, only when known motifs are given"""
+    if not _RS_KM_ON:
+        return {}
+    d = f"results/promoter_motifs/{wc.sample}_{wc.ident}/motifs"
+    return {"known_list": d + "/known_motifs.tsv",
+            "training_fimo": d + "/fimo_training.tsv",
+            "training_ids": d + "/training_ids.tsv"}
+
+
+def _rescue_meme_file(wc):
+    """file with the de novo training sites: meme.txt, or the combined file
+    when only known motifs are used"""
+    d = f"results/promoter_motifs/{wc.sample}_{wc.ident}"
+    if _RS_KM_ON and not _RS_KM.get("use de novo motifs", True):
+        return d + "/motifs/scan_motifs.meme"
+    return d + "/meme/meme.txt"
 
 
 def _rescue_opts(wc):
@@ -26,17 +47,25 @@ def _rescue_opts(wc):
     o.append(f"--position-slack {RESCUE.get('position slack', 3)}")
     o.append(f"--min-training-sites {RESCUE.get('min training sites', 3)}")
     o.append(f"--max-site-spread {RESCUE.get('max site spread', 12)}")
+    if _RS_KM_ON:
+        d = f"results/promoter_motifs/{wc.sample}_{wc.ident}/motifs"
+        o.append(f"--known-list {d}/known_motifs.tsv --training-fimo {d}/fimo_training.tsv "
+                 f"--training-ids {d}/training_ids.tsv")
+        for name, rng in (_RS_KM.get("positions") or {}).items():
+            o.append(f"--known-position '{name}' {rng[0]} {rng[1]}")
     return " ".join(o)
 
 
 rule rescue_tss:
     input:
+        unpack(_rescue_known_inputs),                      # known motifs only
         random_fimo = "results/promoter_motifs/{sample}_{ident}/background/fimo_random.tsv",
         random_fa   = "results/promoter_motifs/{sample}_{ident}/background/random.fa",
         cand0_fimo  = rules.scan_candidates.output.fimo,  # takes whatever file scan_candidates writes as it's fimo output
         cand0_bed   = rules.select_cand0.output.bed,
         tss_fa      = SC_TSS_DIR + "/TSS_seq_{sample}_enriched_{ident}.fa.out",
-        motifs      = SC_MOTIF_FILE,                       # training sites + E-values
+        motifs      = _rescue_meme_file,                   # training sites + E-values
+        scan_motifs = SC_MOTIF_FILE,                       # the file both scans used
     output:
         tss_tiers = "results/promoter_motifs/{sample}_{ident}/rescue/tss_tiers.tsv",
         bed       = "results/promoter_motifs/{sample}_{ident}/rescue/tss_final.bed",
