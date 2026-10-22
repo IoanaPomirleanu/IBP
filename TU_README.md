@@ -1,8 +1,5 @@
 # Transcription unit (TU) module
 
-Written so it can be copied into the repo as `TU_README.md` (next to `MOTIFS_README.md`).
-Line-by-line explanation of every rule: `../tu-steps.md`. Design and paper definitions: `../tu-design.md`.
-
 ## Definition
 
 A TU runs from a TSS to a downstream TTS on the same strand, and is kept only if reads start at the TSS and end at the TTS (as in Putzeys et al. 2022, 2023 and the LUZ100 paper).
