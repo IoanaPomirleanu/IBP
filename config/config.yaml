@@ -25,7 +25,7 @@ minimum coverage:       # reads needed at a peak
     TSS: 5
     TTS: 20
   control:
-    TSS: 5
+    TSS: 2
     TTS: 20
 
 peak alignment error: 1 # max nt between an enriched and a control TSS peak to pair them
