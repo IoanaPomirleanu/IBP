@@ -88,7 +88,7 @@ rule findSpikeInThreshold:
     shell:
         """
         awk -F ',' -v OFS='\t' -v n="{params.name}" '
-            index($1, n) && $5 ~ /\+/ && (found == 0 || $6 > best) {{found = 1; best = $6; c = $1; p = $4; r = $15}}
+            index($1, n) && $5 ~ /[+]/ && (found == 0 || $6 > best) {{found = 1; best = $6; c = $1; p = $4; r = $15}}
             END {{
                 if (!found) {{print "Spike-in not found in data: no + strand candidate on a contig containing " n > "/dev/stderr"; exit 1}}
                 gsub(/"/, "", c); print c, p, r
