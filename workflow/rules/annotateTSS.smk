@@ -88,7 +88,7 @@ rule findSpikeInThreshold:
     shell:
         """
         awk -F ',' -v OFS='\t' -v n="{params.name}" '
-            index($1, n) && $5 ~ /\+/ && (found == 0 || $6 > best) {{found = 1; best = $6; c = $1; p = $4; r = $15}}
+            index($1, n) && $5 ~ /[+]/ && (found == 0 || $6 > best) {{found = 1; best = $6; c = $1; p = $4; r = $15}}
             END {{
                 if (!found) {{print "Spike-in not found in data: no + strand candidate on a contig containing " n > "/dev/stderr"; exit 1}}
                 gsub(/"/, "", c); print c, p, r
@@ -97,7 +97,7 @@ rule findSpikeInThreshold:
 
 # write information to BED files
 # includes threshold file
-rule PosPeaksToBedFile:
+rule posPeaksToBedFile:
     input:
         'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/enr_ratios_{sample}_{ident}.plus.csv',
         'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/spike_in_threshold_{sample}_{ident}.txt'
@@ -116,7 +116,7 @@ rule PosPeaksToBedFile:
         sed -i 's/\"//g' {output[0]}
         sed -i 's/\"//g' {output[1]}     
         """
-rule NegPeaksToBedFile:
+rule negPeaksToBedFile:
     input:
         'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/enr_ratios_{sample}_{ident}.minus.csv',
         'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/spike_in_threshold_{sample}_{ident}.txt'
@@ -156,4 +156,16 @@ rule extractSequencesTSS:
     shell:
         """
         bedtools getfasta -fi {params.fasta} -bed {input} -fo {output} -s -name 
+        """
+
+# promoter windows of candidates at or above the spike-in threshold (_1), on the phage contig only
+rule selectAboveThresholdSequences:
+    input: 'results/transcript_boundaries/TSS_{sample}/TSS_{sample}_{ident}/TSS_seq_{sample}_enriched_{ident}.fa.out'
+    output: 'results/promoter_motifs/{sample}_{ident}/meme_training.fa'
+    shell:
+        """
+        awk -v phage="{wildcards.sample}" '
+          /^>/ {{ split(substr($0, 2), a, "::"); keep = (a[1] ~ /_1$/ && index(a[2], phage) > 0) }}
+          keep
+        ' {input} > {output}
         """

@@ -1,0 +1,12 @@
+name: env_scan_background
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.9
+  - meme>=5.4
+  - bedtools
+  - samtools
+  - pandas==2.2.2
+  - numpy==1.26.4
+  
