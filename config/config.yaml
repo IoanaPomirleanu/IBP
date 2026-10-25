@@ -17,18 +17,18 @@ spike-in name: FLuc     # part of the spike-in contig name; its TSS enrichment r
 termseq alpha: 0.001    # not read by any rule at the moment
 
 cluster width:          # 5' / 3' ends within this many nt form one peak
-  TSS: 5
-  TTS: 25
+  TSS: 15
+  TTS: 30
 
 minimum coverage:       # reads needed at a peak
   enriched:
-    TSS: 5
-    TTS: 20
+    TSS: 25
+    TTS: 25
   control:
     TSS: 2
-    TTS: 20
+    TTS: 5
 
-peak alignment error: 1 # max nt between an enriched and a control TSS peak to pair them
+peak alignment error: 2 # max nt between an enriched and a control TSS peak to pair them
 TTS threshold: 0.20     # minimum termination efficiency (coverage drop) to keep a TTS
 
 # --- sequence windows ----------------------------------------------------------
@@ -74,7 +74,7 @@ motif rescue:
   motifs: null              # null = automatic selection (below); or a list, e.g. [MEME-1]
   max evalue: null          # e.g. 0.05 once enough _1 promoters are pooled; null = no E-value filter
   min training sites: 3     # a motif needs at least this many MEME sites in the _1 windows
-  max site spread: 12       # ... and those sites within this many nt of each other (positional)
+  max site spread: 50       # ... and those sites within this many nt of each other (positional)
   position rule: auto       # auto = where MEME found the motif in the _1 windows (+- slack)
                             # off = anywhere in the window; [26, 41] = fixed range of hit starts
   position slack: 3         # nt added on both sides of the training-site range
