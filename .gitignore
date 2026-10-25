@@ -12,3 +12,8 @@ results/
 logs/
 *_peak_calling/
 .snakemake/
+config/runs/
+make_run_configs.sh
+run_phage.slurm
+submit_runs.sh
+__pycache__/
