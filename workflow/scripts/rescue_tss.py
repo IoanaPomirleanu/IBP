@@ -75,7 +75,11 @@ os.makedirs(args.outdir, exist_ok=True)
 
 
 def read_fimo(path):
-    d = pd.read_csv(path, sep="\t")
+    if os.path.getsize(path) == 0:   # FIMO --text writes nothing at all when it finds no hit
+        d = pd.DataFrame(columns=["motif_id", "motif_alt_id", "sequence_name", "start", "stop",
+                                  "strand", "score", "p-value", "q-value", "matched_sequence"])
+    else:
+        d = pd.read_csv(path, sep="\t")
     d = d[~d["motif_id"].astype(str).str.startswith("#")]   # FIMO comment lines, if any
     d["start"] = d["start"].astype(int)
     d["p-value"] = d["p-value"].astype(float)
